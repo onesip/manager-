@@ -70,33 +70,47 @@ export function exportToCSV(history: any[]) {
     return;
   }
 
-  let csv =
-    "页面,日期,时间,当班店员,班次/场景,门店状态,当班员工,Owner跟进,红线触发数,总分,等级,判定,主要问题\n";
+  // BOM so Excel can open Chinese correctly
+  let csv = "\uFEFF";
+  
+  csv +=
+    "提交时间,页面,日期,时间,当班店员,班次/场景,门店状态,当班员工,Owner跟进,红线触发数,总分,等级,判定,主要问题,模块,巡查项,评分,加权分,是否触发红线,负责人,纠正状态,备注\n";
 
   history.forEach((rec) => {
-    const row = [
-      rec.sheet,
-      rec.date || "",
-      rec.time || "",
-      rec.inspector || "",
-      rec.shift || "",
-      rec.status || "",
-      rec.staff || "",
-      rec.ownerFollow || "",
-      rec.redCount,
-      rec.totalScore,
-      rec.grade,
-      rec.passFail,
-      (rec.majorIssues || "").replace(/\n/g, " "),
-    ];
-    csv += row.map((v) => '"' + String(v).replace(/"/g, '""') + '"').join(",") + "\n";
+    rec.items.forEach((item: any) => {
+      const row = [
+        rec.timestamp || "",
+        rec.sheet || "",
+        rec.date || "",
+        rec.time || "",
+        rec.inspector || "",
+        rec.shift || "",
+        rec.status || "",
+        rec.staff || "",
+        rec.ownerFollow || "",
+        rec.redCount,
+        rec.totalScore,
+        rec.grade,
+        rec.passFail,
+        (rec.majorIssues || "").replace(/\n/g, " "),
+        item.module || "",
+        item.item || "",
+        item.score !== null ? item.score : "",
+        item.weighted !== undefined ? item.weighted : "",
+        item.redTriggered || "",
+        item.responsible || "",
+        item.correction || "",
+        (item.remark || "").replace(/\n/g, " "),
+      ];
+      csv += row.map((v) => '"' + String(v).replace(/"/g, '""') + '"').join(",") + "\n";
+    });
   });
 
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "scoring_history.csv";
+  a.download = "scoring_history_details.csv";
   a.style.display = "none";
   document.body.appendChild(a);
   a.click();
